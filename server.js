@@ -18,6 +18,9 @@ const credentials = { key: privateKey, cert: certificate, ca: ca };
 const express = require('express');
 const app = express();
 
+const connectToDb = require('./config/connectToDb');
+const mongooseConnection = connectToDb();
+
 const cors = require('cors');
 
 const corsOptions = {
@@ -43,6 +46,39 @@ app.use((req, res, next) => {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
+
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
+const sessionStore = MongoStore.create({
+    mongoUrl: process.env.DB_URL,
+    collection: 'sessions'
+});
+app.use(session({
+    secret: process.env.SECRET,
+    resave: false,
+    saveUninitialized: true,
+
+    store: sessionStore,
+    proxy: true,
+    cookie: {
+        maxAge: 1000 * 60 * 60 * 24,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+    }
+}));
+
+const passport = require('passport');
+require('./config/passport');
+app.use(passport.initialize());
+app.use(passport.session());
+
+const routes = require('./routes');
+app.use(routes);
+
+app.use((req, res, next) => {
+    console.log("Session: ", req.session);
+    next();
+});
 
 if (process.env.NODE_ENV === 'development') {
     const http = require('http');
