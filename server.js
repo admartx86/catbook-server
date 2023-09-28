@@ -1,6 +1,8 @@
 require('dotenv').config();
 
 //const path = require('path');
+const meowRoutes = require('./routes/meowRoutes.js');
+const authRoutes = require('./routes/authRoutes.js');
 
 const fs = require('fs');
 const https = require('https');
@@ -19,7 +21,7 @@ const express = require('express');
 const app = express();
 
 const connectToDb = require('./config/connectToDb');
-const mongooseConnection = connectToDb();
+connectToDb();
 
 const cors = require('cors');
 
@@ -39,6 +41,8 @@ const corsOptions = {
     credentials: true
 };
 
+
+  
 app.use((req, res, next) => {
     res.setHeader('Content-Security-Policy', "default-src 'self'; img-src https://trusted.com; child-src 'none'");
     next();
@@ -47,9 +51,20 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
+app.get('/test', (req, res) => {
+    console.log('Test route hit');
+    res.send('Test route');
+});
+
+app.use((req, res, next) => {
+    console.log(`Incoming request: ${req.method} ${req.url}`);
+    next();
+  });
+
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const sessionStore = MongoStore.create({
+    
     mongoUrl: process.env.DB_URL,
     collection: 'sessions'
 });
@@ -58,13 +73,14 @@ app.use(session({
     resave: false,
     saveUninitialized: true,
 
-    store: sessionStore,
+    
     proxy: true,
     cookie: {
         maxAge: 1000 * 60 * 60 * 24,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
-    }
+        sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax'
+    },
+    store: sessionStore
 }));
 
 const passport = require('passport');
@@ -72,8 +88,8 @@ require('./config/passport');
 app.use(passport.initialize());
 app.use(passport.session());
 
-const routes = require('./routes');
-app.use(routes);
+app.use('/meows', meowRoutes);
+app.use('/auth', authRoutes);
 
 app.use((req, res, next) => {
     console.log("Session: ", req.session);

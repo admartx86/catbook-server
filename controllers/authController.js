@@ -1,0 +1,53 @@
+const passport = require('passport');
+const { generatePassword } = require('../lib/passwordUtils');
+const User = require('../models/user');
+
+exports.login = (req, res, next) => {
+  passport.authenticate('local', { keepSessionInfo: true }, async (err, user, info) => {
+    if (err) {
+      return next(err);
+    }
+    if (!user) {
+      return res.status(401).json({ message: 'Authentication failed', info });
+    }
+    req.login(user, async (loginErr) => {
+      if (loginErr) {
+        return next(loginErr);
+      }
+      return res.status(200).json({ message: 'Authentication successful', user });
+    });
+  })(req, res, next);
+};
+
+exports.logout = (req, res) => {
+  try {
+    req.logout(() => {
+      req.session.destroy((err) => {
+        if (err) {
+          return res.status(500).json({ message: 'Logout failed' });
+        }
+        res.status(200).json({ message: 'Logout successful' });
+      });
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Logout failed' });
+  }
+};
+
+exports.register = (req, res, next) => {
+  const saltHash = generatePassword(req.body.password);
+  const salt = saltHash.salt;
+  const hash = saltHash.hash;
+  const newUser = new User({
+    username: req.body.username,
+    hash: hash,
+    salt: salt,
+  });
+  newUser.save()
+  .then((user) => {
+    res.json({ message: 'Registration successful', user });
+  })
+  .catch((error) => {
+    res.status(500).json({ message: 'An error occurred' });
+  });
+};
