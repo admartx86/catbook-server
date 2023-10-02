@@ -2,13 +2,31 @@ const Meow = require('../models/meow');
 
 exports.createMeow = async (req, res) => {
   try {
-    const newMeow = new Meow(req.body);
+    console.log("Meow Data:", req.body);
+    console.log("File Details:", req.file);
+
+    const meowData = {
+      ...req.body,
+      meowMedia: req.file ? req.file.location : ''
+    };
+
+    const newMeow = new Meow(meowData);
     const savedMeow = await newMeow.save();
     res.status(201).json(savedMeow);
   } catch (error) {
     res.status(400).json({ message: 'Error creating Meow', error });
   }
 };
+
+// exports.createMeow = async (req, res) => {
+//   try {
+//     const newMeow = new Meow(req.body);
+//     const savedMeow = await newMeow.save();
+//     res.status(201).json(savedMeow);
+//   } catch (error) {
+//     res.status(400).json({ message: 'Error creating Meow', error });
+//   }
+// };
 
 exports.getMeow = async (req, res) => {
     console.log("ID:", req.params.meowId);

@@ -1,6 +1,23 @@
 require('dotenv').config();
 
 //const path = require('path');
+
+const multer = require('multer');
+
+//
+// const storage = multer.diskStorage({
+//     destination: function (req, file, cb) {
+//       cb(null, 'uploads/')
+//     },
+//     filename: function (req, file, cb) {
+//       cb(null, `${Date.now()}-${file.originalname}`)
+//     }
+//   });
+  
+//   const upload = multer({ storage: storage });
+//  
+
+
 const meowRoutes = require('./routes/meowRoutes.js');
 const authRoutes = require('./routes/authRoutes.js');
 
@@ -58,6 +75,8 @@ app.get('/test', (req, res) => {
 
 app.use((req, res, next) => {
     console.log(`Incoming request: ${req.method} ${req.url}`);
+    console.log(`Meow Data:, ${req.body}`);
+    console.log(`file:, ${req.file}`);
     next();
   });
 
