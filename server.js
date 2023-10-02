@@ -77,6 +77,7 @@ app.use((req, res, next) => {
     console.log(`Incoming request: ${req.method} ${req.url}`);
     console.log(`Meow Data:, ${req.body}`);
     console.log(`file:, ${req.file}`);
+    console.log(`can you hear me?`);
     next();
   });
 

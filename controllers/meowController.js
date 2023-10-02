@@ -1,9 +1,37 @@
+const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+
 const Meow = require('../models/meow');
+
+const deleteFileFromS3 = async (bucket, key) => {
+  console.log("deleteFileFromS3 is being called"); 
+  console.log("Key:", key);
+  const s3 = new S3Client({ 
+    region: process.env.AWS_REGION,
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+  });
+
+  const deleteParams = {
+    Bucket: bucket,
+    Key: key,
+  };
+
+  try {
+    await s3.send(new DeleteObjectCommand(deleteParams));
+    console.log(`Successfully deleted ${key} from ${bucket}`);
+  } catch (err) {
+    console.log('Error deleting file from S3:', err);
+  }
+};
 
 exports.createMeow = async (req, res) => {
   try {
     console.log("Meow Data:", req.body);
     console.log("File Details:", req.file);
+    console.log("File Location:", req.file.location);
+    console.log("USING CREATEMEOW FUNCTION");
 
     const meowData = {
       ...req.body,
@@ -17,16 +45,6 @@ exports.createMeow = async (req, res) => {
     res.status(400).json({ message: 'Error creating Meow', error });
   }
 };
-
-// exports.createMeow = async (req, res) => {
-//   try {
-//     const newMeow = new Meow(req.body);
-//     const savedMeow = await newMeow.save();
-//     res.status(201).json(savedMeow);
-//   } catch (error) {
-//     res.status(400).json({ message: 'Error creating Meow', error });
-//   }
-// };
 
 exports.getMeow = async (req, res) => {
     console.log("ID:", req.params.meowId);
@@ -48,13 +66,27 @@ exports.updateMeow = async (req, res) => {
 };
 
 exports.deleteMeow = async (req, res) => {
+  console.log('deleteMeow function called');
   try {
+    console.log('deleteMeow function called???');
+    // Find the Meow to be deleted
+    const meowToDelete = await Meow.findById(req.params.meowId);
+
+    // Delete the media file from S3
+    if (meowToDelete && meowToDelete.meowMedia) {
+      const s3FilePath = meowToDelete.meowMedia; // Assuming meowMedia contains the S3 file path
+      const s3FileKey = s3FilePath.split('/').pop(); // Extracting file key from the URL
+      await deleteFileFromS3(process.env.S3_BUCKET, s3FileKey);
+    }
+
+    // Delete the Meow from the database
     await Meow.findByIdAndDelete(req.params.meowId);
-    res.status(200).json({ message: 'Meow deleted' });
+    res.status(200).json({ message: 'Meow and associated media deleted' });
   } catch (error) {
     res.status(400).json({ message: 'Error deleting Meow', error });
   }
 };
+
 
 exports.getAllMeows = async (req, res) => {
     try {
