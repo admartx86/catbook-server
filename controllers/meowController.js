@@ -28,10 +28,10 @@ const deleteFileFromS3 = async (bucket, key) => {
 
 exports.createMeow = async (req, res) => {
   try {
-    console.log("Meow Data:", req.body);
-    console.log("File Details:", req.file);
-    console.log("File Location:", req.file.location);
-    console.log("USING CREATEMEOW FUNCTION");
+    console.log("Meow Data:", req.body); //debug
+    console.log("File Details:", req.file); //debug
+    console.log("File Location:", req.file.location); //debug
+    console.log("USING CREATEMEOW FUNCTION"); //debug
 
     const meowData = {
       ...req.body,
@@ -42,7 +42,7 @@ exports.createMeow = async (req, res) => {
     const savedMeow = await newMeow.save();
     res.status(201).json(savedMeow);
   } catch (error) {
-    res.status(400).json({ message: 'Error creating Meow', error });
+    res.status(400).json({ message: 'Error creating Meow. Check that the file size does not exceed limit of 50 MB. Also check that the file format is supported. Supported formats: .mp4, .webm, .ogg, .mov, .avi, .wmv, .m4v, .jpg, .jpeg, .png, .gif, .bmp', error });
   }
 };
 
