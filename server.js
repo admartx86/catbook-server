@@ -1,22 +1,6 @@
 require('dotenv').config();
 
-//const path = require('path');
-
 const multer = require('multer');
-
-//
-// const storage = multer.diskStorage({
-//     destination: function (req, file, cb) {
-//       cb(null, 'uploads/')
-//     },
-//     filename: function (req, file, cb) {
-//       cb(null, `${Date.now()}-${file.originalname}`)
-//     }
-//   });
-  
-//   const upload = multer({ storage: storage });
-//  
-
 
 const meowRoutes = require('./routes/meowRoutes.js');
 const authRoutes = require('./routes/authRoutes.js');
@@ -43,67 +27,59 @@ connectToDb();
 const cors = require('cors');
 
 const corsOptions = {
-    origin: function (origin, callback) {
-        const whitelist = [/^https:\/\/catbook\.dev$/, /^http:\/\/localhost:(\d+)$/, /^http:\/\/172.233.221.154:8080$/];
-        if (origin) {
-            if (whitelist.some(allowedOrigin => allowedOrigin.test(origin) || allowedOrigin === origin)) {
-                callback(null, true)
-            } else {
-                callback(new Error('Not allowed by CORS'))
-            }
-        } else {
-            callback(new Error('Origin not provided'), false);
-        }
-    },
-    credentials: true
+  origin: function (origin, callback) {
+    const whitelist = [
+      /^https:\/\/catbook\.dev$/,
+      /^http:\/\/localhost:(\d+)$/,
+      /^http:\/\/172.233.221.154:8080$/
+    ];
+    if (origin) {
+      if (
+        whitelist.some((allowedOrigin) => allowedOrigin.test(origin) || allowedOrigin === origin)
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    } else {
+      callback(new Error('Origin not provided'), false);
+    }
+  },
+  credentials: true
 };
 
-
-  
 app.use((req, res, next) => {
-    res.setHeader('Content-Security-Policy', "default-src 'self'; img-src https://trusted.com; child-src 'none'");
-    next();
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; img-src https://trusted.com; child-src 'none'"
+  );
+  next();
 });
 app.use(cors(corsOptions));
 app.use(express.json());
-app.use(express.urlencoded({extended: true}));
-
-app.get('/test', (req, res) => {
-    console.log('Test route hit');
-    res.send('Test route');
-});
-
-app.use((req, res, next) => {
-    console.log(`Incoming request: ${req.method} ${req.url}`);
-    console.log(`Meow Data:, ${req.body}`);
-    console.log(`file:, ${req.file}`);
-    console.log(`can you hear me?`);
-    console.log(`Author Name: , ${req.body.authorName}`);
-
-    next();
-  });
+app.use(express.urlencoded({ extended: true }));
 
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const sessionStore = MongoStore.create({
-    
-    mongoUrl: process.env.DB_URL,
-    collection: 'sessions'
+  mongoUrl: process.env.DB_URL,
+  collection: 'sessions'
 });
-app.use(session({
+app.use(
+  session({
     secret: process.env.SECRET,
     resave: false,
     saveUninitialized: true,
 
-    
     proxy: true,
     cookie: {
-        maxAge: 1000 * 60 * 60 * 24,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax'
+      maxAge: 1000 * 60 * 60 * 24,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax'
     },
     store: sessionStore
-}));
+  })
+);
 
 const passport = require('passport');
 require('./config/passport');
@@ -114,18 +90,17 @@ app.use('/meows', meowRoutes);
 app.use('/auth', authRoutes);
 
 app.use((req, res, next) => {
-    console.log("Session: ", req.session);
-    next();
+  console.log('Session: ', req.session);
+  next();
 });
 
 if (process.env.NODE_ENV === 'development') {
-    const http = require('http');
-    http.createServer(app).listen(process.env.PORT);
-    console.log('HTTP Backend Server running.')
+  const http = require('http');
+  http.createServer(app).listen(process.env.PORT);
+  console.log('HTTP Backend Server running.');
+} else {
+  const httpsServer = https.createServer(credentials, app);
+  httpsServer.listen(process.env.PORT, () => {
+    console.log('HTTPS Backend Server running.');
+  });
 }
-else {
-    const httpsServer = https.createServer(credentials, app);
-    httpsServer.listen(process.env.PORT, () => {
-        console.log('HTTPS Backend Server running.');
-    });
-};

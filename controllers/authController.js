@@ -42,26 +42,25 @@ exports.register = (req, res, next) => {
     realName: req.body.realName,
     username: req.body.username,
     hash: hash,
-    salt: salt,
+    salt: salt
   });
-  newUser.save()
-  .then((user) => {
-    res.json({ message: 'Registration successful', user });
-  })
-  .catch((error) => {
-    res.status(500).json({ message: 'An error occurred' });
-  });
+  newUser
+    .save()
+    .then((user) => {
+      res.json({ message: 'Registration successful', user });
+    })
+    .catch((error) => {
+      res.status(500).json({ message: 'An error occurred' });
+    });
 };
 
-//
 exports.editRealName = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-      user.realName = req.body.realName;
+    user.realName = req.body.realName;
     await user.save();
-      res.status(200).json({ message: 'Real name updated', user });
+    res.status(200).json({ message: 'Real name updated', user });
   } catch (error) {
-      res.status(500).json({ message: 'An error occurred' });
+    res.status(500).json({ message: 'An error occurred' });
   }
-}
-//
+};

@@ -30,11 +30,10 @@ const upload = multer({
     },
     key: function (req, file, cb) {
       cb(null, shortId.generate() + '-' + file.originalname);
-    },
+    }
   }),
   limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    console.log('File MIME type:', file.mimetype);  //debug
     if (allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
@@ -44,7 +43,6 @@ const upload = multer({
 });
 
 router.post('/', upload.single('meowMedia'), meowController.createMeow);
-
 router.get('/:meowId', meowController.getMeow);
 router.put('/:meowId', meowController.updateMeow);
 router.delete('/:meowId', meowController.deleteMeow);
