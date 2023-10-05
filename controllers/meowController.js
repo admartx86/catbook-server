@@ -29,8 +29,6 @@ const deleteFileFromS3 = async (bucket, key) => {
 exports.createMeow = async (req, res) => {
   try {
     console.log("Meow Data:", req.body); //debug
-    console.log("File Details:", req.file); //debug
-    console.log("File Location:", req.file.location); //debug
     console.log("USING CREATEMEOW FUNCTION"); //debug
 
     const meowData = {

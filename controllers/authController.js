@@ -39,6 +39,7 @@ exports.register = (req, res, next) => {
   const salt = saltHash.salt;
   const hash = saltHash.hash;
   const newUser = new User({
+    realName: req.body.realName,
     username: req.body.username,
     hash: hash,
     salt: salt,
@@ -51,3 +52,16 @@ exports.register = (req, res, next) => {
     res.status(500).json({ message: 'An error occurred' });
   });
 };
+
+//
+exports.editRealName = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+      user.realName = req.body.realName;
+    await user.save();
+      res.status(200).json({ message: 'Real name updated', user });
+  } catch (error) {
+      res.status(500).json({ message: 'An error occurred' });
+  }
+}
+//

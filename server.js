@@ -78,6 +78,8 @@ app.use((req, res, next) => {
     console.log(`Meow Data:, ${req.body}`);
     console.log(`file:, ${req.file}`);
     console.log(`can you hear me?`);
+    console.log(`Author Name: , ${req.body.authorName}`);
+
     next();
   });
 
