@@ -68,17 +68,70 @@ exports.editRealName = async (req, res) => {
 exports.dateJoined = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    
+
     const dateJoined = user.dateJoined;
 
     res.status(200).json({ message: 'Date joined retrieved', dateJoined });
   } catch (error) {
-    console.error("Error fetching dateJoined:", error);
+    console.error('Error fetching dateJoined:', error);
     res.status(500).json({ message: 'An error occurred' });
   }
 };
 
+exports.bio = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    res.status(200).json({ bio: user.bio });
+  } catch (error) {
+    res.status(500).json({ message: 'An error occurred' });
+  }
+};
+
+exports.location = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    res.status(200).json({ location: user.location }); // or realName based on your actual schema
+  } catch (error) {
+    res.status(500).json({ message: 'An error occurred' });
+  }
+};
+
+exports.editBio = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.bio = req.body.bio; // Update the user's bio
+    await user.save(); // Save the updated user to the database
+
+    res.status(200).json({ message: 'Bio updated successfully', bio: user.bio });
+  } catch (error) {
+    console.error('Error updating bio:', error);
+    res.status(500).json({ message: 'An error occurred' });
+  }
+};
+
+exports.editLocation = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.location = req.body.location; // Update the user's location
+    await user.save(); // Save the updated user to the database
+
+    res.status(200).json({ message: 'Location updated successfully', location: user.location });
+  } catch (error) {
+    console.error('Error updating location:', error);
+    res.status(500).json({ message: 'An error occurred' });
+  }
+};
