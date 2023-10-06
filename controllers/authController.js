@@ -68,16 +68,16 @@ exports.editRealName = async (req, res) => {
 exports.dateJoined = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-
+    
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-
+    
     const dateJoined = user.dateJoined;
 
     res.status(200).json({ message: 'Date joined retrieved', dateJoined });
   } catch (error) {
-    console.error('Error fetching dateJoined:', error);
+    console.error("Error fetching dateJoined:", error);
     res.status(500).json({ message: 'An error occurred' });
   }
 };
@@ -94,7 +94,7 @@ exports.bio = async (req, res) => {
 exports.location = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    res.status(200).json({ location: user.location }); // or realName based on your actual schema
+    res.status(200).json({ location: user.location });
   } catch (error) {
     res.status(500).json({ message: 'An error occurred' });
   }
@@ -108,12 +108,12 @@ exports.editBio = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    user.bio = req.body.bio; // Update the user's bio
-    await user.save(); // Save the updated user to the database
+    user.bio = req.body.bio;
+    await user.save();
 
     res.status(200).json({ message: 'Bio updated successfully', bio: user.bio });
   } catch (error) {
-    console.error('Error updating bio:', error);
+    console.error("Error updating bio:", error);
     res.status(500).json({ message: 'An error occurred' });
   }
 };
@@ -126,12 +126,43 @@ exports.editLocation = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    user.location = req.body.location; // Update the user's location
-    await user.save(); // Save the updated user to the database
+    user.location = req.body.location;
+    await user.save();
 
     res.status(200).json({ message: 'Location updated successfully', location: user.location });
   } catch (error) {
-    console.error('Error updating location:', error);
+    console.error("Error updating location:", error);
     res.status(500).json({ message: 'An error occurred' });
+  }
+};
+
+
+exports.profilePhoto = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    res.status(200).json({ profilePhoto: user.profilePhoto });
+  } catch (error) {
+    res.status(500).json({ message: 'An error occurred' });
+  }
+}
+
+exports.editProfilePhoto = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    // Check if user exists
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update the user's profilePhoto with the new URL from S3
+    user.profilePhoto = req.file ? req.file.location : '';
+
+    await user.save();
+
+    res.status(200).json({ message: 'Profile photo updated successfully', profilePhoto: user.profilePhoto });
+
+  } catch (error) {
+    res.status(500).json({ message: 'An error occurred while updating profile photo', error });
   }
 };
