@@ -1,6 +1,7 @@
 const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 
 const Meow = require('../models/meow');
+const User = require('../models/user');
 
 const deleteFileFromS3 = async (bucket, key) => {
   const s3 = new S3Client({
@@ -26,8 +27,14 @@ const deleteFileFromS3 = async (bucket, key) => {
 
 exports.createMeow = async (req, res) => {
   try {
+    const { author } = req.body;
+    const user = await User.findOne({ username: author });
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
     const meowData = {
       ...req.body,
+      author: user._id,
       meowMedia: req.file ? req.file.location : ''
     };
     const newMeow = new Meow(meowData);
@@ -45,7 +52,11 @@ exports.createMeow = async (req, res) => {
 exports.getMeow = async (req, res) => {
   console.log('ID:', req.params.meowId);
   try {
-    const meow = await Meow.findById(req.params.meowId);
+    const meow = await Meow.findById(req.params.meowId).populate(
+      'author',
+      'username realName profilePhoto'
+    );
+    console.log('Populated Meow:', meow);
     res.status(200).json(meow);
   } catch (error) {
     res.status(404).json({ message: 'Meow not found', error });
@@ -78,7 +89,7 @@ exports.deleteMeow = async (req, res) => {
 
 exports.getAllMeows = async (req, res) => {
   try {
-    const meows = await Meow.find({});
+    const meows = await Meow.find({}).populate('author', 'username realName profilePhoto');
     res.status(200).json(meows);
   } catch (error) {
     res.status(400).json({ message: 'Error fetching Meows', error });

@@ -86,6 +86,16 @@ require('./config/passport');
 app.use(passport.initialize());
 app.use(passport.session());
 
+app.use((req, res, next) => {
+  console.log('---- New Incoming Request ----');
+  console.log('Method:', req.method);
+  console.log('URL:', req.url);
+  console.log('Headers:', req.headers);
+  console.log('Body:', req.body);
+  console.log('Query Parameters:', req.query);
+  next();
+});
+
 app.use('/meows', meowRoutes);
 app.use('/auth', authRoutes);
 

@@ -68,16 +68,16 @@ exports.editRealName = async (req, res) => {
 exports.dateJoined = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    
+
     const dateJoined = user.dateJoined;
 
     res.status(200).json({ message: 'Date joined retrieved', dateJoined });
   } catch (error) {
-    console.error("Error fetching dateJoined:", error);
+    console.error('Error fetching dateJoined:', error);
     res.status(500).json({ message: 'An error occurred' });
   }
 };
@@ -113,7 +113,7 @@ exports.editBio = async (req, res) => {
 
     res.status(200).json({ message: 'Bio updated successfully', bio: user.bio });
   } catch (error) {
-    console.error("Error updating bio:", error);
+    console.error('Error updating bio:', error);
     res.status(500).json({ message: 'An error occurred' });
   }
 };
@@ -131,11 +131,10 @@ exports.editLocation = async (req, res) => {
 
     res.status(200).json({ message: 'Location updated successfully', location: user.location });
   } catch (error) {
-    console.error("Error updating location:", error);
+    console.error('Error updating location:', error);
     res.status(500).json({ message: 'An error occurred' });
   }
 };
-
 
 exports.profilePhoto = async (req, res) => {
   try {
@@ -144,7 +143,7 @@ exports.profilePhoto = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'An error occurred' });
   }
-}
+};
 
 exports.editProfilePhoto = async (req, res) => {
   try {
@@ -160,8 +159,9 @@ exports.editProfilePhoto = async (req, res) => {
 
     await user.save();
 
-    res.status(200).json({ message: 'Profile photo updated successfully', profilePhoto: user.profilePhoto });
-
+    res
+      .status(200)
+      .json({ message: 'Profile photo updated successfully', profilePhoto: user.profilePhoto });
   } catch (error) {
     res.status(500).json({ message: 'An error occurred while updating profile photo', error });
   }

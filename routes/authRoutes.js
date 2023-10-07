@@ -1,20 +1,13 @@
 const router = require('express').Router();
 const authController = require('../controllers/authController');
-///
 
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 const s3 = require('../config/s3Config');
 
-
 const shortId = require('shortid');
 
-const allowedMimeTypes = [
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/bmp'
-];
+const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp'];
 
 const upload = multer({
   storage: multerS3({
@@ -38,11 +31,6 @@ const upload = multer({
   }
 });
 
-
-
-
-
-///
 router.post('/login', authController.login);
 router.post('/logout', authController.logout);
 router.post('/register', authController.register);

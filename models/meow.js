@@ -2,9 +2,11 @@ const mongoose = require('mongoose');
 
 const meowSchema = new mongoose.Schema(
   {
-    authorPhoto: { type: String, required: true },
-    authorName: { type: String, required: false },
-    authorUsername: { type: String, required: true },
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
     isPinned: { type: Boolean, default: false },
     meowText: {
       type: String,
