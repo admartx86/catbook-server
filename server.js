@@ -4,6 +4,7 @@ const multer = require('multer');
 
 const meowRoutes = require('./routes/meowRoutes.js');
 const authRoutes = require('./routes/authRoutes.js');
+const searchRoutes = require('./routes/searchRoutes.js');
 
 const fs = require('fs');
 const https = require('https');
@@ -98,6 +99,7 @@ app.use((req, res, next) => {
 
 app.use('/meows', meowRoutes);
 app.use('/auth', authRoutes);
+app.use('/search', searchRoutes);
 
 app.use((req, res, next) => {
   console.log('Session: ', req.session);

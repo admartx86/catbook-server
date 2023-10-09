@@ -26,4 +26,6 @@ const meowSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+meowSchema.index({ meowText: 'text' });
+
 module.exports = mongoose.model('Meow', meowSchema);
