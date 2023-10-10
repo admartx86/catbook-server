@@ -27,7 +27,8 @@ const deleteFileFromS3 = async (bucket, key) => {
 
 exports.createMeow = async (req, res) => {
   try {
-    const { author } = req.body;
+    const { author, isAReply, replyToMeowId } = req.body;
+    // const { author } = req.body;
     const user = await User.findOne({ username: author });
     if (!user) {
       return res.status(400).json({ message: 'User not found' });
@@ -35,8 +36,25 @@ exports.createMeow = async (req, res) => {
     const meowData = {
       ...req.body,
       author: user._id,
-      meowMedia: req.file ? req.file.location : ''
+      meowMedia: req.file ? req.file.location : '',
+      isAReply: false //
     };
+
+    if (isAReply && replyToMeowId) {
+      
+      const originalMeow = await Meow.findById(replyToMeowId);
+    if (!originalMeow) {
+      return res.status(404).json({ message: 'Original Meow not found' });
+    }
+      
+      meowData.isAReply = true;
+      meowData.repliedToMeow = replyToMeowId;
+    }
+
+    
+  
+
+
     const newMeow = new Meow(meowData);
     const savedMeow = await newMeow.save();
     res.status(201).json(savedMeow);

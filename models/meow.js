@@ -21,8 +21,14 @@ const meowSchema = new mongoose.Schema(
     },
     isAReply: { type: Boolean, default: false },
     isARemeow: { type: Boolean, default: false },
-    likedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+    likedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    repliedToMeow: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Meow',
+      default: null
+    }    
   },
+  
   { timestamps: true }
 );
 

@@ -166,3 +166,26 @@ exports.editProfilePhoto = async (req, res) => {
     res.status(500).json({ message: 'An error occurred while updating profile photo', error });
   }
 };
+
+exports.user = async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username });
+    if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Return only the fields you need, or you can adjust this further based on requirements
+    res.status(200).json({
+      username: user.username,
+      realName: user.realName,
+      email: user.email,
+      dateJoined: user.dateJoined,
+      bio: user.bio,
+      location: user.location,
+      profilePhoto: user.profilePhoto
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'An error occurred', error: error.message });
+  }
+}
+

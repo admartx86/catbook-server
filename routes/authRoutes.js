@@ -42,5 +42,7 @@ router.put('/editBio', authController.editBio);
 router.put('/editLocation', authController.editLocation);
 router.get('/profilePhoto', authController.profilePhoto); //
 router.put('/editProfilePhoto', upload.single('profilePhoto'), authController.editProfilePhoto);
+router.get('/:username', authController.user); //
+
 
 module.exports = router;
