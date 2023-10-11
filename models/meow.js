@@ -14,7 +14,7 @@ const meowSchema = new mongoose.Schema(
       minlength: 0,
       maxlength: 280,
       validate: {
-        validator: function(text) {
+        validator: function (text) {
           // If there is text, it's always valid
           if (text && text.length > 0) return true;
 
@@ -40,9 +40,9 @@ const meowSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Meow',
       default: null
-    }    
+    }
   },
-  
+
   { timestamps: true }
 );
 

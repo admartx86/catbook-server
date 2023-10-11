@@ -42,10 +42,20 @@ const upload = multer({
   }
 });
 
+function ensureAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.status(401).json({ message: 'User not authenticated' });
+}
+
 router.post('/', upload.single('meowMedia'), meowController.createMeow);
 router.get('/:meowId', meowController.getMeow);
 router.put('/:meowId', meowController.updateMeow);
 router.delete('/:meowId', meowController.deleteMeow);
 router.get('/', meowController.getAllMeows);
+
+router.post('/:meowId/like', ensureAuthenticated, meowController.likeMeow);
+router.delete('/:meowId/unlike', ensureAuthenticated, meowController.unlikeMeow);
 
 module.exports = router;

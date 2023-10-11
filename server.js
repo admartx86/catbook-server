@@ -94,17 +94,23 @@ app.use((req, res, next) => {
   console.log('Headers:', req.headers);
   console.log('Body:', req.body);
   console.log('Query Parameters:', req.query);
+  if (req.method === 'POST' && req.path.startsWith('/meow/') && req.path.endsWith('/like')) {
+    console.log('Incoming LIKE request');
+    console.log('Session: ', req.session);
+    console.log('Request Body: ', req.body); // Log the request body if needed
+  }
   next();
+});
+
+app.use((err, req, res, next) => {
+  console.error('Unhandled Error:', err.message);
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
 });
 
 app.use('/meows', meowRoutes);
 app.use('/auth', authRoutes);
 app.use('/search', searchRoutes);
-
-app.use((req, res, next) => {
-  console.log('Session: ', req.session);
-  next();
-});
 
 if (process.env.NODE_ENV === 'development') {
   const http = require('http');

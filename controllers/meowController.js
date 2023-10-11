@@ -42,30 +42,26 @@ exports.createMeow = async (req, res) => {
     };
 
     if (isAReply && replyToMeowId) {
-      console.log("replying!")
+      console.log('replying!');
       const originalMeow = await Meow.findById(replyToMeowId);
-    if (!originalMeow) {
-      return res.status(404).json({ message: 'Original Meow not found' });
-    }
-      
+      if (!originalMeow) {
+        return res.status(404).json({ message: 'Original Meow not found' });
+      }
+
       meowData.isAReply = true;
       meowData.repliedToMeow = replyToMeowId;
     }
 
     if (isARemeow && remeowToMeowId) {
-      console.log("remeowing!")
+      console.log('remeowing!');
       const originalMeow = await Meow.findById(remeowToMeowId);
-    if (!originalMeow) {
-      return res.status(404).json({ message: 'Original Meow not found' });
-    }
-      
+      if (!originalMeow) {
+        return res.status(404).json({ message: 'Original Meow not found' });
+      }
+
       meowData.isARemeow = true;
       meowData.embeddedMeow = remeowToMeowId;
     }
-
-    
-  
-
 
     const newMeow = new Meow(meowData);
     const savedMeow = await newMeow.save();
@@ -123,5 +119,45 @@ exports.getAllMeows = async (req, res) => {
     res.status(200).json(meows);
   } catch (error) {
     res.status(400).json({ message: 'Error fetching Meows', error });
+  }
+};
+
+exports.likeMeow = async (req, res) => {
+  try {
+    const meow = await Meow.findById(req.params.meowId);
+    if (!meow) {
+      return res.status(404).json({ message: 'Meow not found' });
+    }
+
+    const userHasLiked = meow.likedBy.some((userId) => userId.equals(req.user._id));
+    if (userHasLiked) {
+      return res.status(400).json({ message: 'You have already liked this meow' });
+    }
+
+    meow.likedBy.push(req.user._id);
+    await meow.save();
+    res.json({ message: 'Meow liked' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+exports.unlikeMeow = async (req, res) => {
+  try {
+    const meow = await Meow.findById(req.params.meowId);
+    if (!meow) {
+      return res.status(404).json({ message: 'Meow not found' });
+    }
+
+    const index = meow.likedBy.indexOf(req.user._id);
+    if (index === -1) {
+      return res.status(400).json({ message: 'You have not liked this meow' });
+    }
+
+    meow.likedBy.splice(index, 1);
+    await meow.save();
+    res.json({ message: 'Meow unliked' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

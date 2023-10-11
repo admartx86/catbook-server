@@ -44,5 +44,4 @@ router.get('/profilePhoto', authController.profilePhoto); //
 router.put('/editProfilePhoto', upload.single('profilePhoto'), authController.editProfilePhoto);
 router.get('/:username', authController.user); //
 
-
 module.exports = router;
