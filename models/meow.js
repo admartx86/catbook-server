@@ -10,9 +10,22 @@ const meowSchema = new mongoose.Schema(
     isPinned: { type: Boolean, default: false },
     meowText: {
       type: String,
-      required: true,
-      minlength: 1,
-      maxlength: 280
+      // required: true,
+      minlength: 0,
+      maxlength: 280,
+      validate: {
+        validator: function(text) {
+          // If there is text, it's always valid
+          if (text && text.length > 0) return true;
+
+          // If it's a remeow or has media, text is not required
+          if (this.isARemeow || this.meowMedia) return true;
+
+          // In all other cases, text is required
+          return false;
+        },
+        message: "Text is required for meows that aren't remeows and have no media."
+      }
     },
     meowMedia: String,
     embeddedMeow: {
@@ -21,6 +34,7 @@ const meowSchema = new mongoose.Schema(
     },
     isAReply: { type: Boolean, default: false },
     isARemeow: { type: Boolean, default: false },
+    isADirectRemeow: { type: Boolean, default: false },
     likedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     repliedToMeow: {
       type: mongoose.Schema.Types.ObjectId,
