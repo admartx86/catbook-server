@@ -36,6 +36,7 @@ const meowSchema = new mongoose.Schema(
     isARemeow: { type: Boolean, default: false },
     isADirectRemeow: { type: Boolean, default: false },
     likedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    remeowedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     repliedToMeow: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Meow',
