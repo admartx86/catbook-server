@@ -174,7 +174,7 @@ exports.user = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Return only the fields you need, or you can adjust this further based on requirements
+
     res.status(200).json({
       username: user.username,
       realName: user.realName,
