@@ -65,7 +65,11 @@ exports.createMeow = async (req, res) => {
 
     const newMeow = new Meow(meowData);
     const savedMeow = await newMeow.save();
-    res.status(201).json(savedMeow);
+    const populatedMeow = await Meow.findById(savedMeow._id).populate(
+      'author',
+      'username realName profilePhoto'
+    );
+    res.status(201).json(populatedMeow);
   } catch (error) {
     res.status(400).json({
       message:
@@ -136,7 +140,12 @@ exports.likeMeow = async (req, res) => {
 
     meow.likedBy.push(req.user._id);
     await meow.save();
-    res.json({ message: 'Meow liked' });
+    const populatedMeow = await Meow.findById(meow._id).populate(
+      'author',
+      'username realName profilePhoto'
+    );
+    res.json(populatedMeow);
+    //res.json(meow);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -156,7 +165,12 @@ exports.unlikeMeow = async (req, res) => {
 
     meow.likedBy.splice(index, 1);
     await meow.save();
-    res.json({ message: 'Meow unliked' });
+    const populatedMeow = await Meow.findById(meow._id).populate(
+      'author',
+      'username realName profilePhoto'
+    );
+    res.json(populatedMeow);
+    //res.json(meow);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
