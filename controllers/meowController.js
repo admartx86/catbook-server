@@ -50,6 +50,9 @@ exports.createMeow = async (req, res) => {
 
       meowData.isAReply = true;
       meowData.repliedToMeow = replyToMeowId;
+
+      originalMeow.repliedBy.push(user._id);
+      await originalMeow.save();
     }
 
     if (isARemeow && remeowToMeowId) {
@@ -114,11 +117,10 @@ exports.deleteMeow = async (req, res) => {
       return res.status(404).json({ message: 'Meow not found' });
     }
 
-    // If the meow to delete is a remeow, update the original meow's remeowedBy array
     if (meowToDelete.isARemeow && meowToDelete.embeddedMeow) {
       const originalMeow = await Meow.findById(meowToDelete.embeddedMeow);
       if (originalMeow) {
-        const index = originalMeow.remeowedBy.indexOf(meowToDelete.author); // Assuming meowToDelete.author contains the ID of the user who made the remeow
+        const index = originalMeow.remeowedBy.indexOf(meowToDelete.author);
         if (index !== -1) {
           originalMeow.remeowedBy.splice(index, 1);
           await originalMeow.save();
