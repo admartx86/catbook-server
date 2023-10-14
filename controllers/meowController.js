@@ -28,7 +28,6 @@ const deleteFileFromS3 = async (bucket, key) => {
 exports.createMeow = async (req, res) => {
   try {
     const { author, isAReply, isARemeow, replyToMeowId, remeowToMeowId } = req.body;
-    // const { author } = req.body;
     const user = await User.findOne({ username: author });
     if (!user) {
       return res.status(400).json({ message: 'User not found' });
@@ -43,13 +42,14 @@ exports.createMeow = async (req, res) => {
 
     if (isAReply && replyToMeowId) {
       console.log('replying!');
-      const originalMeow = await Meow.findById(replyToMeowId);
+      const originalMeow = await Meow.findById(replyToMeowId).populate('author');
       if (!originalMeow) {
         return res.status(404).json({ message: 'Original Meow not found' });
       }
 
       meowData.isAReply = true;
       meowData.repliedToMeow = replyToMeowId;
+      meowData.repliedToAuthor = originalMeow.author.username;
 
       originalMeow.repliedBy.push(user._id);
       await originalMeow.save();
@@ -128,35 +128,41 @@ exports.deleteMeow = async (req, res) => {
       }
     }
 
-    // Delete the media from S3 if it exists
     if (meowToDelete.meowMedia) {
       const s3FilePath = meowToDelete.meowMedia;
       const s3FileKey = s3FilePath.split('/').pop();
       await deleteFileFromS3(process.env.S3_BUCKET, s3FileKey);
     }
 
-    // Delete the meow
     await Meow.findByIdAndDelete(req.params.meowId);
-    res.status(200).json({ message: 'Meow and associated media deleted' });
+
+    const placeholderMeow = new Meow({
+      _id: meowToDelete._id,
+      author: meowToDelete.author,
+      createdAt: meowToDelete.createdAt,
+      isADirectRemeow: false,
+      isAPlaceholder: true,
+      isARemeow: meowToDelete.isARemeow,
+      isAReply: meowToDelete.isAReply,
+      isPinned: false,
+      likedBy: meowToDelete.likedBy,
+      meowMedia: '',
+      meowText: 'This meow has been deleted.',
+      remeowedBy: meowToDelete.remeowedBy,
+      repliedBy: meowToDelete.repliedBy,
+      repliedToMeow: meowToDelete.repliedToMeow
+    });
+
+    await placeholderMeow.save();
+
+    res
+      .status(200)
+      .json({ message: 'Meow and any associated media deleted and replaced with placeholder' });
   } catch (error) {
     res.status(400).json({ message: 'Error deleting Meow', error });
+    console.log('Error deleting Meow', error.message);
   }
 };
-
-// exports.deleteMeow = async (req, res) => {
-//   try {
-//     const meowToDelete = await Meow.findById(req.params.meowId);
-//     if (meowToDelete && meowToDelete.meowMedia) {
-//       const s3FilePath = meowToDelete.meowMedia;
-//       const s3FileKey = s3FilePath.split('/').pop();
-//       await deleteFileFromS3(process.env.S3_BUCKET, s3FileKey);
-//     }
-//     await Meow.findByIdAndDelete(req.params.meowId);
-//     res.status(200).json({ message: 'Meow and associated media deleted' });
-//   } catch (error) {
-//     res.status(400).json({ message: 'Error deleting Meow', error });
-//   }
-// };
 
 exports.getAllMeows = async (req, res) => {
   try {
@@ -186,7 +192,6 @@ exports.likeMeow = async (req, res) => {
       'username realName profilePhoto'
     );
     res.json(populatedMeow);
-    //res.json(meow);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -211,7 +216,6 @@ exports.unlikeMeow = async (req, res) => {
       'username realName profilePhoto'
     );
     res.json(populatedMeow);
-    //res.json(meow);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
