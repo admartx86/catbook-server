@@ -169,7 +169,9 @@ exports.editProfilePhoto = async (req, res) => {
 
 exports.user = async (req, res) => {
   try {
-    const user = await User.findOne({ username: req.params.username });
+    const user = await User.findOne({ username: req.params.username })
+    .populate ('following', 'username realName profilePhoto bio location dateJoined')
+    .populate ('followers', 'username realName profilePhoto bio location dateJoined');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -177,13 +179,111 @@ exports.user = async (req, res) => {
     res.status(200).json({
       username: user.username,
       realName: user.realName,
-      email: user.email,
-      dateJoined: user.dateJoined,
+      profilePhoto: user.profilePhoto,
       bio: user.bio,
       location: user.location,
-      profilePhoto: user.profilePhoto
+      dateJoined: user.dateJoined,
+      following: user.following,
+      followers: user.followers
     });
   } catch (error) {
     res.status(500).json({ message: 'An error occurred', error: error.message });
   }
 };
+
+exports.followers = async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username }).populate('followers', 'username realName profilePhoto bio location dateJoined');
+    if (!user) {
+      console.log(error.message);
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({ followers: user.followers });
+  } catch (error) {
+    res.status(500).json({ message: 'An error occurred', error: error.message });
+  }
+}
+
+exports.following = async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username }).populate('following', 'username realName profilePhoto bio location dateJoined');
+    if (!user) {
+      console.log(error.message);
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({ following: user.following });
+   } catch (error) {
+    res.status(500).json({ message: 'An error occurred', error: error.message });
+  }
+}
+
+exports.follow = async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const userToFollow = await User.findOne({ username : req.body.profileUsername});
+    if (!userToFollow) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const userIsFollowing = user.following.some((userId) => userId.equals(userToFollow._id));
+    if (userIsFollowing) {
+      return res.status(400).json({ message: 'You are already following this user' });
+    }  
+
+    userToFollow.followers.push(user);
+    await userToFollow.save();
+
+    user.following.push(userToFollow);
+    await user.save();
+    
+    res.status(200).json({ message: 'Followed successfully', following: user.following });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: 'An error occurred', error: error.message });
+  }
+}
+
+exports.unfollow = async (req, res) => {
+try { 
+const user = await User.findOne({ username: req.params.username });
+if (!user) {
+return res.status(404).json({ message: 'User (user) not found' });
+}
+
+const userToUnfollow = await User.findOne({ username : req.body.profileUsername });
+if (!userToUnfollow) {
+return res.status(404).json({ message: 'User (userToUnfollow) not found' });
+}
+
+// failing here but I know that username6 is in fact following username5, from the database
+const index = user.following.map(f => f._id.toString()).indexOf(userToUnfollow._id.toString());
+// const index = user.following.indexOf(userToUnfollow);
+if (index === -1) {
+return res.status(400).json({ message: 'You are not following this user (A)' });
+}
+
+user.following.splice(index, 1);
+await user.save();
+
+const index2 = userToUnfollow.followers.map(f => f._id.toString()).indexOf(user._id.toString());
+// const index2 = userToUnfollow.followers.indexOf(user);
+if (index2 === -1) {
+return res.status(400).json({ message: 'You are not following this user (B)' });
+}
+
+userToUnfollow.followers.splice(index2, 1);
+await userToUnfollow.save();
+
+res.status(200).json({ message: 'Unfollowed successfully', following: user.following });
+}
+catch (error) {
+res.status(500).json({ message: 'An error occurred', error: error.message });
+}
+}
+

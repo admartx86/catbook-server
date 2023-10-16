@@ -43,5 +43,9 @@ router.put('/editLocation', authController.editLocation);
 router.get('/profilePhoto', authController.profilePhoto); //
 router.put('/editProfilePhoto', upload.single('profilePhoto'), authController.editProfilePhoto);
 router.get('/:username', authController.user); //
+router.get('/:username/followers', authController.followers); //
+router.get('/:username/following', authController.following); //
+router.post('/:username/follow', authController.follow); //
+router.delete('/:username/unfollow', authController.unfollow); //
 
 module.exports = router;
