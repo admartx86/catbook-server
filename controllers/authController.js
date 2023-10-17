@@ -271,8 +271,8 @@ exports.follow = async (req, res) => {
     user.following.push(userToFollow);
     await user.save();
     
-    const filteredFollowing = user.following.map(filterFollowing);
-    res.status(200).json({ message: 'Followed successfully', following: filteredFollowing });
+    const user2 = await User.findOne({ username: req.params.username });
+    res.status(200).json({ message: 'Unfollowed successfully', following: user2.following });
   } catch (error) {
     console.log(error.message);
     res.status(500).json({ message: 'An error occurred', error: error.message });
@@ -313,8 +313,8 @@ exports.unfollow = async (req, res) => {
     userToUnfollow.followers.splice(index2, 1);
     await userToUnfollow.save();
 
-    const filteredFollowing = user.following.map(filterFollowing);
-    res.status(200).json({ message: 'Unfollowed successfully', following: filteredFollowing });
+    const user2 = await User.findOne({ username: req.params.username });
+    res.status(200).json({ message: 'Unfollowed successfully', following: user2.following });
   } catch (error) {
     res.status(500).json({ message: 'An error occurred', error: error.message });
   }
