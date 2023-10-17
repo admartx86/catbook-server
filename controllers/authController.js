@@ -2,6 +2,17 @@ const passport = require('passport');
 const { generatePassword } = require('../lib/passwordUtils');
 const User = require('../models/user');
 
+const filterUserInfo = (user) => {
+  return {
+    username: user.username,
+    realName: user.realName,
+    profilePhoto: user.profilePhoto,
+    bio: user.bio,
+    location: user.location,
+    dateJoined: user.dateJoined
+  };
+};
+
 exports.login = (req, res, next) => {
   passport.authenticate('local', { keepSessionInfo: true }, async (err, user, info) => {
     if (err) {
@@ -241,8 +252,10 @@ exports.follow = async (req, res) => {
 
     user.following.push(userToFollow);
     await user.save();
-    
-    res.status(200).json({ message: 'Followed successfully', following: user.following });
+
+    const filteredFollowing = user.following.map(filterUserInfo);
+
+    res.status(200).json({ message: 'Followed successfully', following: filteredFollowing });
   } catch (error) {
     console.log(error.message);
     res.status(500).json({ message: 'An error occurred', error: error.message });
@@ -280,7 +293,8 @@ return res.status(400).json({ message: 'You are not following this user (B)' });
 userToUnfollow.followers.splice(index2, 1);
 await userToUnfollow.save();
 
-res.status(200).json({ message: 'Unfollowed successfully', following: user.following });
+const filteredFollowing = user.following.map(filterUserInfo);
+res.status(200).json({ message: 'Unfollowed successfully', following: filteredFollowingg });
 }
 catch (error) {
 res.status(500).json({ message: 'An error occurred', error: error.message });
