@@ -2,7 +2,7 @@ const passport = require('passport');
 const { generatePassword } = require('../lib/passwordUtils');
 const User = require('../models/user');
 
-const filterUserInfo = (user) => {
+const filterFollowing = (user) => {
   return {
     username: user.username,
     realName: user.realName,
@@ -11,6 +11,11 @@ const filterUserInfo = (user) => {
     location: user.location,
     dateJoined: user.dateJoined
   };
+};
+
+const filterUser = (user) => {
+  const { hash, salt, ...filteredUser } = user._doc ? user._doc : user;
+  return filteredUser;
 };
 
 exports.login = (req, res, next) => {
@@ -25,7 +30,9 @@ exports.login = (req, res, next) => {
       if (loginErr) {
         return next(loginErr);
       }
-      return res.status(200).json({ message: 'Authentication successful', user });
+
+      const filteredUser = filterUser(user);
+      return res.status(200).json({ message: 'Authentication successful', user: filteredUser });
     });
   })(req, res, next);
 };
@@ -58,45 +65,18 @@ exports.register = (req, res, next) => {
   newUser
     .save()
     .then((user) => {
-      res.json({ message: 'Registration successful', user });
+      const { hash, salt, ...filteredUser } = user._doc;
+      res.json({ message: 'Registration successful', user: filteredUser });
     })
     .catch((error) => {
       res.status(500).json({ message: 'An error occurred' });
     });
 };
 
-exports.editRealName = async (req, res) => {
+exports.profilePhoto = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    user.realName = req.body.realName;
-    await user.save();
-    res.status(200).json({ message: 'Real name updated', user });
-  } catch (error) {
-    res.status(500).json({ message: 'An error occurred' });
-  }
-};
-
-exports.dateJoined = async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id);
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    const dateJoined = user.dateJoined;
-
-    res.status(200).json({ message: 'Date joined retrieved', dateJoined });
-  } catch (error) {
-    console.error('Error fetching dateJoined:', error);
-    res.status(500).json({ message: 'An error occurred' });
-  }
-};
-
-exports.bio = async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id);
-    res.status(200).json({ bio: user.bio });
+    res.status(200).json({ profilePhoto: user.profilePhoto });
   } catch (error) {
     res.status(500).json({ message: 'An error occurred' });
   }
@@ -111,17 +91,59 @@ exports.location = async (req, res) => {
   }
 };
 
-exports.editBio = async (req, res) => {
+exports.bio = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
+    res.status(200).json({ bio: user.bio });
+  } catch (error) {
+    res.status(500).json({ message: 'An error occurred' });
+  }
+};
 
+exports.dateJoined = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    res.status(200).json({ dateJoined: user.dateJoined });
+  } catch (error) {
+    res.status(500).json({ message: 'An error occurred' });
+  }
+};
+
+exports.editProfilePhoto = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+    user.profilePhoto = req.file ? req.file.location : '';
+    await user.save();
+    res
+      .status(200)
+      .json({ message: 'Profile photo updated successfully', profilePhoto: user.profilePhoto });
+  } catch (error) {
+    res.status(500).json({ message: 'An error occurred while updating profile photo', error });
+  }
+};
 
+exports.editRealName = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    user.realName = req.body.realName;
+    await user.save();
+    res.status(200).json({ message: 'Real name updated', realName: user.realName });
+  } catch (error) {
+    res.status(500).json({ message: 'An error occurred' });
+  }
+};
+
+exports.editBio = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
     user.bio = req.body.bio;
     await user.save();
-
     res.status(200).json({ message: 'Bio updated successfully', bio: user.bio });
   } catch (error) {
     console.error('Error updating bio:', error);
@@ -132,14 +154,11 @@ exports.editBio = async (req, res) => {
 exports.editLocation = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-
     user.location = req.body.location;
     await user.save();
-
     res.status(200).json({ message: 'Location updated successfully', location: user.location });
   } catch (error) {
     console.error('Error updating location:', error);
@@ -147,46 +166,14 @@ exports.editLocation = async (req, res) => {
   }
 };
 
-exports.profilePhoto = async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id);
-    res.status(200).json({ profilePhoto: user.profilePhoto });
-  } catch (error) {
-    res.status(500).json({ message: 'An error occurred' });
-  }
-};
-
-exports.editProfilePhoto = async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id);
-
-    // Check if user exists
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Update the user's profilePhoto with the new URL from S3
-    user.profilePhoto = req.file ? req.file.location : '';
-
-    await user.save();
-
-    res
-      .status(200)
-      .json({ message: 'Profile photo updated successfully', profilePhoto: user.profilePhoto });
-  } catch (error) {
-    res.status(500).json({ message: 'An error occurred while updating profile photo', error });
-  }
-};
-
 exports.user = async (req, res) => {
   try {
-    const user = await User.findOne({ username: req.params.username })
-    .populate ('following', 'username realName profilePhoto bio location dateJoined')
-    .populate ('followers', 'username realName profilePhoto bio location dateJoined');
+    const user = await User.findOne({ username: req.params.username });
+    // .populate ('following', 'username realName profilePhoto bio location dateJoined')
+    // .populate ('followers', 'username realName profilePhoto bio location dateJoined');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-
     res.status(200).json({
       username: user.username,
       realName: user.realName,
@@ -204,31 +191,62 @@ exports.user = async (req, res) => {
 
 exports.followers = async (req, res) => {
   try {
-    const user = await User.findOne({ username: req.params.username }).populate('followers', 'username realName profilePhoto bio location dateJoined');
+    const user = await User.findOne({ username: req.params.username });
     if (!user) {
       console.log(error.message);
       return res.status(404).json({ message: 'User not found' });
     }
-
     res.status(200).json({ followers: user.followers });
   } catch (error) {
     res.status(500).json({ message: 'An error occurred', error: error.message });
   }
-}
+};
 
 exports.following = async (req, res) => {
   try {
-    const user = await User.findOne({ username: req.params.username }).populate('following', 'username realName profilePhoto bio location dateJoined');
+    const user = await User.findOne({ username: req.params.username });
+    if (!user) {
+      console.log(error.message);
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json({ following: user.following });
+  } catch (error) {
+    res.status(500).json({ message: 'An error occurred', error: error.message });
+  }
+};
+
+exports.followersDetailed = async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username }).populate(
+      'followers',
+      'username realName profilePhoto bio location dateJoined'
+    );
+    if (!user) {
+      console.log(error.message);
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json({ followers: user.followers });
+  } catch (error) {
+    res.status(500).json({ message: 'An error occurred', error: error.message });
+  }
+};
+
+exports.followingDetailed = async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username }).populate(
+      'following',
+      'username realName profilePhoto bio location dateJoined'
+    );
     if (!user) {
       console.log(error.message);
       return res.status(404).json({ message: 'User not found' });
     }
 
     res.status(200).json({ following: user.following });
-   } catch (error) {
+  } catch (error) {
     res.status(500).json({ message: 'An error occurred', error: error.message });
   }
-}
+};
 
 exports.follow = async (req, res) => {
   try {
@@ -236,68 +254,68 @@ exports.follow = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-
-    const userToFollow = await User.findOne({ username : req.body.profileUsername});
+    
+    const userToFollow = await User.findOne({ username: req.body.profileUsername });
     if (!userToFollow) {
       return res.status(404).json({ message: 'User not found' });
     }
-
+    
     const userIsFollowing = user.following.some((userId) => userId.equals(userToFollow._id));
     if (userIsFollowing) {
       return res.status(400).json({ message: 'You are already following this user' });
-    }  
-
+    }
+    
     userToFollow.followers.push(user);
     await userToFollow.save();
-
+    
     user.following.push(userToFollow);
     await user.save();
-
-    const filteredFollowing = user.following.map(filterUserInfo);
-
+    
+    const filteredFollowing = user.following.map(filterFollowing);
     res.status(200).json({ message: 'Followed successfully', following: filteredFollowing });
   } catch (error) {
     console.log(error.message);
     res.status(500).json({ message: 'An error occurred', error: error.message });
   }
-}
+};
 
 exports.unfollow = async (req, res) => {
-try { 
-const user = await User.findOne({ username: req.params.username });
-if (!user) {
-return res.status(404).json({ message: 'User (user) not found' });
-}
+  try {
+    const user = await User.findOne({ username: req.params.username });
+    if (!user) {
+      return res.status(404).json({ message: 'User (user) not found' });
+    }
 
-const userToUnfollow = await User.findOne({ username : req.body.profileUsername });
-if (!userToUnfollow) {
-return res.status(404).json({ message: 'User (userToUnfollow) not found' });
-}
+    const userToUnfollow = await User.findOne({ username: req.body.profileUsername });
+    if (!userToUnfollow) {
+      return res.status(404).json({ message: 'User (userToUnfollow) not found' });
+    }
 
-// failing here but I know that username6 is in fact following username5, from the database
-const index = user.following.map(f => f._id.toString()).indexOf(userToUnfollow._id.toString());
-// const index = user.following.indexOf(userToUnfollow);
-if (index === -1) {
-return res.status(400).json({ message: 'You are not following this user (A)' });
-}
+    const index = user.following
+      .map((f) => f._id.toString())
+      .indexOf(userToUnfollow._id.toString());
 
-user.following.splice(index, 1);
-await user.save();
+    if (index === -1) {
+      return res.status(400).json({ message: 'You are not following this user (A)' });
+    }
 
-const index2 = userToUnfollow.followers.map(f => f._id.toString()).indexOf(user._id.toString());
-// const index2 = userToUnfollow.followers.indexOf(user);
-if (index2 === -1) {
-return res.status(400).json({ message: 'You are not following this user (B)' });
-}
+    user.following.splice(index, 1);
+    await user.save();
 
-userToUnfollow.followers.splice(index2, 1);
-await userToUnfollow.save();
+    const index2 = userToUnfollow.followers
+      .map((f) => f._id.toString())
+      .indexOf(user._id.toString());
 
-const filteredFollowing = user.following.map(filterUserInfo);
-res.status(200).json({ message: 'Unfollowed successfully', following: filteredFollowingg });
-}
-catch (error) {
-res.status(500).json({ message: 'An error occurred', error: error.message });
-}
-}
+    if (index2 === -1) {
+      return res.status(400).json({ message: 'You are not following this user (B)' });
+    }
 
+    userToUnfollow.followers.splice(index2, 1);
+    await userToUnfollow.save();
+
+    const filteredFollowing = user.following.map(filterFollowing);
+    res.status(200).json({ message: 'Unfollowed successfully', following: filteredFollowing });
+  } catch (error) {
+    res.status(500).json({ message: 'An error occurred', error: error.message });
+  }
+};
