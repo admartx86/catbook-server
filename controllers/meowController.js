@@ -1,6 +1,8 @@
 const stream = require('stream');
 const shortId = require('shortid');
 const axios = require('axios');
+const AWS = require('aws-sdk');
+const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 
 const Meow = require('../models/meow');
 const User = require('../models/user');
