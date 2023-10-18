@@ -22,6 +22,7 @@ const meowSchema = new mongoose.Schema(
       }
     },
     meowMedia: String,
+    gifUrl: String,
     embeddedMeow: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Meow'

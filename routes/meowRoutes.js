@@ -2,9 +2,9 @@ const router = require('express').Router();
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 const s3 = require('../config/s3Config');
-const meowController = require('../controllers/meowController');
-
 const shortId = require('shortid');
+
+const meowController = require('../controllers/meowController');
 
 const allowedMimeTypes = [
   'video/mp4',
@@ -54,7 +54,6 @@ router.get('/:meowId', meowController.getMeow);
 router.put('/:meowId', meowController.updateMeow);
 router.delete('/:meowId', meowController.deleteMeow);
 router.get('/', meowController.getAllMeows);
-
 router.post('/:meowId/like', ensureAuthenticated, meowController.likeMeow);
 router.delete('/:meowId/unlike', ensureAuthenticated, meowController.unlikeMeow);
 

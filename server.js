@@ -87,21 +87,6 @@ require('./config/passport');
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use((req, res, next) => {
-  console.log('---- New Incoming Request ----');
-  console.log('Method:', req.method);
-  console.log('URL:', req.url);
-  console.log('Headers:', req.headers);
-  console.log('Body:', req.body);
-  console.log('Query Parameters:', req.query);
-  if (req.method === 'POST' && req.path.startsWith('/meow/') && req.path.endsWith('/like')) {
-    console.log('Incoming LIKE request');
-    console.log('Session: ', req.session);
-    console.log('Request Body: ', req.body); // Log the request body if needed
-  }
-  next();
-});
-
 app.use((err, req, res, next) => {
   console.error('Unhandled Error:', err.message);
   console.error(err.stack);

@@ -1,4 +1,6 @@
-const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const stream = require('stream');
+const shortId = require('shortid');
+const axios = require('axios');
 
 const Meow = require('../models/meow');
 const User = require('../models/user');
@@ -27,11 +29,14 @@ const deleteFileFromS3 = async (bucket, key) => {
 
 exports.createMeow = async (req, res) => {
   try {
-    const { author, isAReply, isARemeow, replyToMeowId, remeowToMeowId } = req.body;
+    const { author, gifUrl, isAReply, isARemeow, replyToMeowId, remeowToMeowId } = req.body;
+
     const user = await User.findOne({ username: author });
+
     if (!user) {
       return res.status(400).json({ message: 'User not found' });
     }
+
     const meowData = {
       ...req.body,
       author: user._id,
@@ -40,8 +45,26 @@ exports.createMeow = async (req, res) => {
       isARemeow: false
     };
 
+    if (gifUrl) {
+      const response = await axios.get(gifUrl, { responseType: 'stream' });
+      const s3 = new AWS.S3();
+      const passThrough = new stream.PassThrough();
+      const keyName = shortId.generate() + '.gif';
+
+      await s3
+        .upload({
+          Bucket: process.env.S3_BUCKET,
+          Key: keyName,
+          Body: response.data.pipe(passThrough),
+          ContentType: 'image/gif'
+        })
+        .promise();
+      const s3URL = `https://${process.env.S3_BUCKET}.s3.amazonaws.com/${keyName}`;
+      meowData.gifUrl = s3URL;
+    }
+
     if (isAReply && replyToMeowId) {
-      console.log('replying!');
+
       const originalMeow = await Meow.findById(replyToMeowId).populate('author');
       if (!originalMeow) {
         return res.status(404).json({ message: 'Original Meow not found' });
@@ -56,11 +79,12 @@ exports.createMeow = async (req, res) => {
     }
 
     if (isARemeow && remeowToMeowId) {
-      console.log('remeowing!');
       const originalMeow = await Meow.findById(remeowToMeowId);
+      
       if (!originalMeow) {
         return res.status(404).json({ message: 'Original Meow not found' });
       }
+      
       if (!originalMeow.remeowedBy.includes(user._id)) {
         originalMeow.remeowedBy.push(user._id);
         await originalMeow.save();
@@ -77,11 +101,12 @@ exports.createMeow = async (req, res) => {
       'author',
       'username realName profilePhoto'
     );
+
     res.status(201).json(populatedMeow);
   } catch (error) {
+    console.error('Error in createMeow:', error);
     res.status(400).json({
-      message:
-        'Error creating Meow. Check that the file size does not exceed limit of 50 MB. Also check that the file format is supported. Supported formats: .mp4, .webm, .ogg, .mov, .avi, .wmv, .m4v, .jpg, .jpeg, .png, .gif, .bmp',
+      message: `Error creating Meow: ${error.message}`,
       error
     });
   }
@@ -134,12 +159,30 @@ exports.deleteMeow = async (req, res) => {
       await deleteFileFromS3(process.env.S3_BUCKET, s3FileKey);
     }
 
+    if (meowToDelete.gifUrl) {
+      const s3 = new AWS.S3();
+
+      function getKeyFromUrl(gifUrl) {
+        return gifUrl.replace('https://catbook.s3.amazonaws.com/', '');
+      }
+
+      const key = getKeyFromUrl(meowToDelete.gifUrl);
+
+      await s3
+        .deleteObject({
+          Bucket: process.env.S3_BUCKET,
+          Key: key
+        })
+        .promise();
+    }
+
     await Meow.findByIdAndDelete(req.params.meowId);
 
     const placeholderMeow = new Meow({
       _id: meowToDelete._id,
       author: meowToDelete.author,
       createdAt: meowToDelete.createdAt,
+      gifUrl: '',
       isADirectRemeow: false,
       isAPlaceholder: true,
       isARemeow: meowToDelete.isARemeow,

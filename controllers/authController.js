@@ -254,23 +254,23 @@ exports.follow = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    
+
     const userToFollow = await User.findOne({ username: req.body.profileUsername });
     if (!userToFollow) {
       return res.status(404).json({ message: 'User not found' });
     }
-    
+
     const userIsFollowing = user.following.some((userId) => userId.equals(userToFollow._id));
     if (userIsFollowing) {
       return res.status(400).json({ message: 'You are already following this user' });
     }
-    
+
     userToFollow.followers.push(user);
     await userToFollow.save();
-    
+
     user.following.push(userToFollow);
     await user.save();
-    
+
     const user2 = await User.findOne({ username: req.params.username });
     res.status(200).json({ message: 'Unfollowed successfully', following: user2.following });
   } catch (error) {
