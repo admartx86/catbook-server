@@ -27,6 +27,7 @@ const deleteFileFromS3 = async (bucket, key) => {
   } catch (err) {
     console.log('Error deleting file from S3:', err);
   }
+
 };
 
 exports.createMeow = async (req, res) => {
@@ -202,7 +203,7 @@ exports.deleteMeow = async (req, res) => {
 
     res
       .status(200)
-      .json({ message: 'Meow and any associated media deleted and replaced with placeholder' });
+      .json({ message: 'Meow and any associated media deleted and replaced with placeholder', placeholderMeow });
   } catch (error) {
     res.status(400).json({ message: 'Error deleting Meow', error });
     console.log('Error deleting Meow', error.message);
