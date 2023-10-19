@@ -27,7 +27,6 @@ const deleteFileFromS3 = async (bucket, key) => {
   } catch (err) {
     console.log('Error deleting file from S3:', err);
   }
-
 };
 
 exports.createMeow = async (req, res) => {
@@ -51,6 +50,7 @@ exports.createMeow = async (req, res) => {
     if (gifUrl) {
       const response = await axios.get(gifUrl, { responseType: 'stream' });
       const s3 = new AWS.S3();
+      //?
       const passThrough = new stream.PassThrough();
       const keyName = shortId.generate() + '.gif';
 
@@ -59,6 +59,7 @@ exports.createMeow = async (req, res) => {
           Bucket: process.env.S3_BUCKET,
           Key: keyName,
           Body: response.data.pipe(passThrough),
+          //?
           ContentType: 'image/gif'
         })
         .promise();
@@ -67,7 +68,6 @@ exports.createMeow = async (req, res) => {
     }
 
     if (isAReply && replyToMeowId) {
-
       const originalMeow = await Meow.findById(replyToMeowId).populate('author');
       if (!originalMeow) {
         return res.status(404).json({ message: 'Original Meow not found' });
@@ -76,25 +76,23 @@ exports.createMeow = async (req, res) => {
       meowData.isAReply = true;
       meowData.repliedToMeow = replyToMeowId;
       meowData.repliedToAuthor = originalMeow.author.username;
-
       originalMeow.repliedBy.push(user._id);
       await originalMeow.save();
     }
 
     if (isARemeow && remeowToMeowId) {
       const originalMeow = await Meow.findById(remeowToMeowId);
-      
+
       if (!originalMeow) {
         return res.status(404).json({ message: 'Original Meow not found' });
       }
-      
+
       if (!originalMeow.remeowedBy.includes(user._id)) {
         originalMeow.remeowedBy.push(user._id);
         await originalMeow.save();
       }
 
       meowData.isARemeow = true;
-      meowData.remeowedBy = user._id;
       meowData.embeddedMeow = remeowToMeowId;
     }
 
@@ -185,6 +183,7 @@ exports.deleteMeow = async (req, res) => {
       _id: meowToDelete._id,
       author: meowToDelete.author,
       createdAt: meowToDelete.createdAt,
+      embeddedMeow: meowToDelete.embeddedMeow,
       gifUrl: '',
       isADirectRemeow: false,
       isAPlaceholder: true,
@@ -203,7 +202,10 @@ exports.deleteMeow = async (req, res) => {
 
     res
       .status(200)
-      .json({ message: 'Meow and any associated media deleted and replaced with placeholder', placeholderMeow });
+      .json({
+        message: 'Meow and any associated media deleted and replaced with placeholder',
+        placeholderMeow
+      });
   } catch (error) {
     res.status(400).json({ message: 'Error deleting Meow', error });
     console.log('Error deleting Meow', error.message);
