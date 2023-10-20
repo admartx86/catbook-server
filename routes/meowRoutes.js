@@ -50,10 +50,10 @@ function ensureAuthenticated(req, res, next) {
 }
 
 router.post('/', ensureAuthenticated, upload.single('meowMedia'), meowController.createMeow);
-router.get('/:meowId', ensureAuthenticated, meowController.getMeow);
+router.get('/:meowId', meowController.getMeow);
 router.put('/:meowId', ensureAuthenticated, meowController.updateMeow);
 router.delete('/:meowId', ensureAuthenticated, meowController.deleteMeow);
-router.get('/', ensureAuthenticated, meowController.getAllMeows);
+router.get('/', meowController.getAllMeows);
 router.post('/:meowId/like', ensureAuthenticated, meowController.likeMeow);
 router.delete('/:meowId/unlike', ensureAuthenticated, meowController.unlikeMeow);
 module.exports = router;
