@@ -31,6 +31,7 @@ const corsOptions = {
   origin: function (origin, callback) {
     const whitelist = [
       /^https:\/\/catbook\.dev$/,
+      /^https:\/\/www\.catbook\.dev$/,
       /^http:\/\/localhost:(\d+)$/,
       /^http:\/\/172.233.221.154:8080$/
     ];
