@@ -1,9 +1,8 @@
 const stream = require('stream');
 const shortId = require('shortid');
-const axios = require('axios');
 const AWS = require('aws-sdk');
 const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
-
+const axios = require('axios');
 const Meow = require('../models/meow');
 const User = require('../models/user');
 
@@ -15,12 +14,10 @@ const deleteFileFromS3 = async (bucket, key) => {
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
     }
   });
-
   const deleteParams = {
     Bucket: bucket,
     Key: key
   };
-
   try {
     await s3.send(new DeleteObjectCommand(deleteParams));
     console.log(`Successfully deleted ${key} from ${bucket}`);
@@ -32,13 +29,10 @@ const deleteFileFromS3 = async (bucket, key) => {
 exports.createMeow = async (req, res) => {
   try {
     const { author, gifUrl, isAReply, isARemeow, replyToMeowId, remeowToMeowId } = req.body;
-
     const user = await User.findOne({ username: author });
-
     if (!user) {
       return res.status(400).json({ message: 'User not found' });
     }
-
     const meowData = {
       ...req.body,
       author: user._id,
@@ -46,14 +40,11 @@ exports.createMeow = async (req, res) => {
       isAReply: false,
       isARemeow: false
     };
-
     if (gifUrl) {
       const response = await axios.get(gifUrl, { responseType: 'stream' });
       const s3 = new AWS.S3();
-      //?
       const passThrough = new stream.PassThrough();
       const keyName = shortId.generate() + '.gif';
-
       await s3
         .upload({
           Bucket: process.env.S3_BUCKET,
@@ -66,43 +57,35 @@ exports.createMeow = async (req, res) => {
       const s3URL = `https://${process.env.S3_BUCKET}.s3.amazonaws.com/${keyName}`;
       meowData.gifUrl = s3URL;
     }
-
     if (isAReply && replyToMeowId) {
       const originalMeow = await Meow.findById(replyToMeowId).populate('author');
       if (!originalMeow) {
         return res.status(404).json({ message: 'Original Meow not found' });
       }
-
       meowData.isAReply = true;
       meowData.repliedToMeow = replyToMeowId;
       meowData.repliedToAuthor = originalMeow.author.username;
       originalMeow.repliedBy.push(user._id);
       await originalMeow.save();
     }
-
     if (isARemeow && remeowToMeowId) {
       const originalMeow = await Meow.findById(remeowToMeowId);
-
       if (!originalMeow) {
         return res.status(404).json({ message: 'Original Meow not found' });
       }
-
       if (!originalMeow.remeowedBy.includes(user._id)) {
         originalMeow.remeowedBy.push(user._id);
         await originalMeow.save();
       }
-
       meowData.isARemeow = true;
       meowData.embeddedMeow = remeowToMeowId;
     }
-
     const newMeow = new Meow(meowData);
     const savedMeow = await newMeow.save();
     const populatedMeow = await Meow.findById(savedMeow._id).populate(
       'author',
       'username realName profilePhoto'
     );
-
     res.status(201).json(populatedMeow);
   } catch (error) {
     console.error('Error in createMeow:', error);
@@ -142,7 +125,6 @@ exports.deleteMeow = async (req, res) => {
     if (!meowToDelete) {
       return res.status(404).json({ message: 'Meow not found' });
     }
-
     if (meowToDelete.isARemeow && meowToDelete.embeddedMeow) {
       const originalMeow = await Meow.findById(meowToDelete.embeddedMeow);
       if (originalMeow) {
@@ -153,22 +135,17 @@ exports.deleteMeow = async (req, res) => {
         }
       }
     }
-
     if (meowToDelete.meowMedia) {
       const s3FilePath = meowToDelete.meowMedia;
       const s3FileKey = s3FilePath.split('/').pop();
       await deleteFileFromS3(process.env.S3_BUCKET, s3FileKey);
     }
-
     if (meowToDelete.gifUrl) {
       const s3 = new AWS.S3();
-
       function getKeyFromUrl(gifUrl) {
         return gifUrl.replace('https://catbook.s3.amazonaws.com/', '');
       }
-
       const key = getKeyFromUrl(meowToDelete.gifUrl);
-
       await s3
         .deleteObject({
           Bucket: process.env.S3_BUCKET,
@@ -176,9 +153,7 @@ exports.deleteMeow = async (req, res) => {
         })
         .promise();
     }
-
     await Meow.findByIdAndDelete(req.params.meowId);
-
     const placeholderMeow = new Meow({
       _id: meowToDelete._id,
       author: meowToDelete.author,
@@ -197,9 +172,7 @@ exports.deleteMeow = async (req, res) => {
       repliedBy: meowToDelete.repliedBy,
       repliedToMeow: meowToDelete.repliedToMeow
     });
-
     await placeholderMeow.save();
-
     res
       .status(200)
       .json({
@@ -227,12 +200,10 @@ exports.likeMeow = async (req, res) => {
     if (!meow) {
       return res.status(404).json({ message: 'Meow not found' });
     }
-
     const userHasLiked = meow.likedBy.some((userId) => userId.equals(req.user._id));
     if (userHasLiked) {
       return res.status(400).json({ message: 'You have already liked this meow' });
     }
-
     meow.likedBy.push(req.user._id);
     await meow.save();
     const populatedMeow = await Meow.findById(meow._id).populate(
@@ -251,12 +222,10 @@ exports.unlikeMeow = async (req, res) => {
     if (!meow) {
       return res.status(404).json({ message: 'Meow not found' });
     }
-
     const index = meow.likedBy.indexOf(req.user._id);
     if (index === -1) {
       return res.status(400).json({ message: 'You have not liked this meow' });
     }
-
     meow.likedBy.splice(index, 1);
     await meow.save();
     const populatedMeow = await Meow.findById(meow._id).populate(

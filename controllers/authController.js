@@ -2,17 +2,6 @@ const passport = require('passport');
 const { generatePassword } = require('../lib/passwordUtils');
 const User = require('../models/user');
 
-const filterFollowing = (user) => {
-  return {
-    username: user.username,
-    realName: user.realName,
-    profilePhoto: user.profilePhoto,
-    bio: user.bio,
-    location: user.location,
-    dateJoined: user.dateJoined
-  };
-};
-
 const filterUser = (user) => {
   const { hash, salt, ...filteredUser } = user._doc ? user._doc : user;
   return filteredUser;
@@ -30,7 +19,6 @@ exports.login = (req, res, next) => {
       if (loginErr) {
         return next(loginErr);
       }
-
       const filteredUser = filterUser(user);
       return res.status(200).json({ message: 'Authentication successful', user: filteredUser });
     });
@@ -169,8 +157,6 @@ exports.editLocation = async (req, res) => {
 exports.user = async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username });
-    // .populate ('following', 'username realName profilePhoto bio location dateJoined')
-    // .populate ('followers', 'username realName profilePhoto bio location dateJoined');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
