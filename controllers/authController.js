@@ -161,6 +161,7 @@ exports.user = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
     res.status(200).json({
+      userId: user._id,
       username: user.username,
       realName: user.realName,
       profilePhoto: user.profilePhoto,
