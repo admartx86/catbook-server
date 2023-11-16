@@ -40,10 +40,16 @@ exports.logout = (req, res) => {
   }
 };
 
-exports.register = (req, res, next) => {
+exports.register = async (req, res, next) => {
   const saltHash = generatePassword(req.body.password);
   const salt = saltHash.salt;
   const hash = saltHash.hash;
+ 
+  const existingUser = await User.findOne({ username: req.body.username});
+  if (existingUser) {
+    return res.status(400).json({ message: "User already exists"})
+  }
+
   const newUser = new User({
     realName: req.body.realName,
     username: req.body.username,
