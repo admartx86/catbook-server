@@ -1,9 +1,8 @@
 const Meow = require('../models/meow');
 
 const performSearch = async (query) => {
-  return Meow.find({
-    $text: { $search: query }
-  });
+  return Meow.find({ $text: { $search: query } })
+    .populate('author', 'username realName profilePhoto');
 };
 
 exports.searchMeows = async (req, res) => {
